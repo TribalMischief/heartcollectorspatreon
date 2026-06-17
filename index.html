@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Inner Sphere — The Heartcollectors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wine:#2A1620;        /* deep aubergine — dark slides */
+    --wine-deep:#1C0D14;
+    --plum:#6D2E46;        /* accent text only, never a fill */
+    --rose:#A26769;
+    --cream:#ECE2D0;       /* content slide background */
+    --cream-soft:#F4EEE2;
+    --gold:#C7993A;        /* warm honey accent */
+    --gold-soft:#E0BE76;
+    --ink:#2A1A22;         /* dark text on cream */
+    --ink-soft:#5A4750;
+    --sidebar:240px;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'DM Sans',system-ui,sans-serif;
+    background:var(--wine-deep);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- App shell ---------- */
+  .app{position:fixed;inset:0;display:flex}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:var(--sidebar);
+    flex:0 0 var(--sidebar);
+    background:var(--wine-deep);
+    color:var(--cream);
+    border-right:1px solid rgba(236,226,208,.10);
+    padding:38px 0 28px;
+    display:flex;flex-direction:column;
+    z-index:20;
+  }
+  .brand{padding:0 30px 30px;border-bottom:1px solid rgba(236,226,208,.10);margin-bottom:26px}
+  .brand .mark{
+    font-family:'Cormorant Garamond',serif;
+    font-size:23px;font-weight:600;letter-spacing:.5px;line-height:1.1;
+    color:var(--cream);
+  }
+  .brand .sub{
+    font-size:9.5px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--gold-soft);margin-top:10px;font-weight:500;
+  }
+  .nav{list-style:none;flex:1;overflow-y:auto}
+  .nav li{
+    position:relative;
+    padding:13px 30px 13px 30px;
+    cursor:pointer;
+    color:rgba(236,226,208,.50);
+    font-size:12.5px;letter-spacing:.04em;font-weight:500;
+    transition:color .3s ease,background .3s ease;
+    display:flex;align-items:center;gap:13px;
+  }
+  .nav li .idx{
+    font-family:'Cormorant Garamond',serif;
+    font-size:14px;font-style:italic;width:18px;text-align:center;
+    color:rgba(236,226,208,.30);transition:color .3s ease;
+  }
+  .nav li:hover{color:var(--cream)}
+  .nav li.active{color:var(--cream)}
+  .nav li.active .idx{color:var(--gold)}
+  .nav li.active::before{
+    content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:24px;background:var(--gold);border-radius:0 2px 2px 0;
+  }
+  .sidebar .foot{
+    padding:18px 30px 0;font-size:9.5px;letter-spacing:.06em;
+    color:rgba(236,226,208,.28);line-height:1.6;
+  }
+
+  /* ---------- Stage ---------- */
+  .stage{position:relative;flex:1;overflow:hidden;background:var(--cream)}
+
+  .counter{
+    position:absolute;top:26px;right:34px;z-index:30;
+    font-family:'Cormorant Garamond',serif;font-size:17px;letter-spacing:.05em;
+    color:var(--ink-soft);
+  }
+  .counter b{color:var(--ink);font-weight:600}
+
+  .progress{
+    position:absolute;left:0;bottom:0;height:3px;z-index:30;
+    background:var(--gold);width:0;transition:width .5s cubic-bezier(.7,0,.2,1);
+  }
+
+  /* ---------- Slides ---------- */
+  .slide{
+    position:absolute;inset:0;
+    padding:84px 92px;
+    display:flex;flex-direction:column;justify-content:center;
+    opacity:0;visibility:hidden;
+    transform:translateY(18px);
+    transition:opacity .55s ease,transform .55s cubic-bezier(.7,0,.2,1),visibility .55s;
+    overflow:hidden;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none}
+  .slide.dark{background:var(--wine);color:var(--cream)}
+  .slide.dark .counter{color:var(--cream)}
+
+  .eyebrow{
+    font-size:11px;letter-spacing:.34em;text-transform:uppercase;font-weight:700;
+    color:var(--gold);margin-bottom:22px;
+  }
+  .slide.dark .eyebrow{color:var(--gold-soft)}
+
+  h1{
+    font-family:'Cormorant Garamond',serif;font-weight:600;
+    line-height:1.02;letter-spacing:-.01em;
+  }
+  h2{font-family:'Cormorant Garamond',serif;font-weight:600;line-height:1.05}
+  .lede{font-size:21px;line-height:1.55;max-width:680px;color:var(--ink-soft);font-weight:400}
+  .slide.dark .lede{color:rgba(236,226,208,.78)}
+
+  /* animate children of active slide */
+  .slide .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s cubic-bezier(.6,0,.2,1)}
+  .slide.active .reveal{opacity:1;transform:none}
+  .slide.active .reveal:nth-child(1){transition-delay:.10s}
+  .slide.active .reveal:nth-child(2){transition-delay:.20s}
+  .slide.active .reveal:nth-child(3){transition-delay:.30s}
+  .slide.active .reveal:nth-child(4){transition-delay:.40s}
+  .slide.active .reveal:nth-child(5){transition-delay:.50s}
+  .slide.active .reveal:nth-child(6){transition-delay:.60s}
+
+  /* ---------- Cover ---------- */
+  #s0{align-items:flex-start}
+  #s0 .kicker{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-soft);font-weight:600;margin-bottom:30px}
+  #s0 h1{font-size:128px;color:var(--cream)}
+  #s0 h1 em{font-style:italic;color:var(--gold-soft);font-weight:500}
+  #s0 .lede{margin-top:34px;font-size:23px;max-width:640px}
+  #s0 .band{margin-top:auto;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(236,226,208,.55);font-weight:500}
+
+  /* concentric rings, the signature motif */
+  .rings{position:absolute;pointer-events:none}
+  #s0 .rings{right:-120px;top:50%;transform:translateY(-50%);width:760px;height:760px;opacity:.9}
+  .ring{position:absolute;border-radius:50%;border:1px solid rgba(224,190,118,.30);left:50%;top:50%;transform:translate(-50%,-50%)}
+  .dot-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 6px rgba(199,153,58,.18)}
+
+  /* ---------- Positioning slide ---------- */
+  .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:center;margin-top:46px;max-width:920px}
+  .vs .col{padding:8px 4px}
+  .vs .tag{font-size:11px;letter-spacing:.26em;text-transform:uppercase;font-weight:700;margin-bottom:16px}
+  .vs .a .tag{color:var(--rose)}
+  .vs .b .tag{color:var(--plum)}
+  .vs .col p{font-family:'Cormorant Garamond',serif;font-size:34px;line-height:1.18;font-weight:500;color:var(--ink)}
+  .vs .a p{color:var(--ink-soft)}
+  .vs .arrow{font-family:'Cormorant Garamond',serif;font-size:40px;color:var(--gold);padding:0 44px;font-style:italic}
+
+  /* ---------- The Ladder (rings of access) ---------- */
+  #s2{flex-direction:row;align-items:center;gap:70px}
+  .ladder-viz{flex:0 0 430px;height:430px;position:relative}
+  .ladder-viz .ring{border-color:rgba(109,46,70,.28)}
+  .ladder-viz .ring.lit{border-color:var(--plum);border-width:2px}
+  .lv-label{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--plum);background:var(--cream);padding:2px 9px}
+  .lv-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
+  .lv-core .pc{font-family:'Cormorant Garamond',serif;font-size:15px;font-style:italic;color:var(--plum)}
+  .ladder-list{flex:1}
+  .ladder-row{display:flex;align-items:baseline;gap:22px;padding:18px 0;border-bottom:1px solid rgba(42,26,34,.12)}
+  .ladder-row:last-child{border-bottom:none}
+  .ladder-row .price{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;color:var(--ink);min-width:118px;line-height:1}
+  .ladder-row .price span{font-size:17px;color:var(--ink-soft);font-weight:500}
+  .ladder-row .meta .name{font-size:17px;font-weight:700;color:var(--plum);letter-spacing:.01em}
+  .ladder-row .meta .pos{font-size:13.5px;color:var(--ink-soft);margin-top:3px}
+
+  /* ---------- Tier detail slides ---------- */
+  .tier{display:grid;grid-template-columns:auto 1fr;gap:64px;align-items:center;max-width:1040px}
+  .tier .figure{text-align:left}
+  .tier .figure .price{font-family:'Cormorant Garamond',serif;font-size:150px;font-weight:600;line-height:.82;color:var(--ink)}
+  .tier .figure .price span{font-size:38px;color:var(--gold);font-weight:600;vertical-align:top}
+  .tier .figure .per{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);margin-top:14px;font-weight:600}
+  .tier .body .name{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:600;color:var(--plum);line-height:1.05}
+  .tier .body .pos{font-size:18px;color:var(--ink-soft);margin:14px 0 26px;font-weight:500}
+  .feat{list-style:none;max-width:480px}
+  .feat li{position:relative;padding:9px 0 9px 26px;font-size:15.5px;line-height:1.45;color:var(--ink);border-top:1px solid rgba(42,26,34,.10)}
+  .feat li:first-child{border-top:none}
+  .feat li::before{content:"";position:absolute;left:0;top:18px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  .pill{display:inline-block;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--cream);background:var(--plum);padding:6px 13px;border-radius:2px;margin-bottom:20px}
+
+  /* ---------- FOMO interstitial ---------- */
+  #s5{align-items:center;text-align:center}
+  #s5 .markline{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold-soft);font-weight:700;margin-bottom:36px}
+  #s5 .quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:72px;line-height:1.14;max-width:1000px;color:var(--cream)}
+  #s5 .quote b{color:var(--gold-soft);font-weight:500}
+  #s5 .attrib{margin-top:40px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:rgba(236,226,208,.5);font-weight:600}
+
+  /* ---------- Launch grid ---------- */
+  .launch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:40px;max-width:1040px}
+  .lcard{background:var(--cream-soft);border:1px solid rgba(42,26,34,.10);border-radius:4px;padding:24px 24px 26px;position:relative;overflow:hidden}
+  .lcard .n{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--gold);margin-bottom:12px}
+  .lcard h3{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--plum);line-height:1.1;margin-bottom:9px}
+  .lcard p{font-size:13.5px;line-height:1.5;color:var(--ink-soft)}
+
+  /* ---------- Closing slide ---------- */
+  #s8{align-items:flex-start}
+  #s8 h1{font-size:96px;color:var(--cream)}
+  #s8 h1 em{font-style:italic;color:var(--gold-soft);font-weight:500}
+  #s8 .lede{margin-top:30px;font-size:22px;max-width:660px}
+  #s8 .founding{margin-top:34px;padding-top:26px;border-top:1px solid rgba(236,226,208,.2);font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;color:var(--gold-soft);max-width:640px;line-height:1.3}
+  #s8 .rings{left:-180px;bottom:-200px;width:680px;height:680px}
+  #s8 .signoff{margin-top:auto;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:rgba(236,226,208,.5);font-weight:500}
+
+  /* ---------- Hint ---------- */
+  .hint{position:absolute;bottom:22px;right:34px;z-index:30;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);opacity:.6}
+  .slide.dark ~ .hint{color:var(--cream)}
+
+  @media (prefers-reduced-motion: reduce){
+    .slide,.slide .reveal,.progress{transition:opacity .2s linear!important;transform:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">The Heartcollectors</div>
+      <div class="sub">The Inner Sphere</div>
+    </div>
+    <ul class="nav" id="nav"></ul>
+    <div class="foot">A membership proposal<br>by Tribal Mischief</div>
+  </aside>
+
+  <!-- STAGE -->
+  <main class="stage">
+    <div class="counter" id="counter"><b>1</b> / 10</div>
+    <div class="hint">← → to navigate</div>
+    <div class="progress" id="progress"></div>
+
+    <!-- 0 · COVER -->
+    <section class="slide dark active" id="s0" data-chapter="The Concept">
+      <div class="rings">
+        <div class="ring" style="width:760px;height:760px"></div>
+        <div class="ring" style="width:560px;height:560px"></div>
+        <div class="ring" style="width:370px;height:370px"></div>
+        <div class="ring" style="width:200px;height:200px;border-color:rgba(224,190,118,.55)"></div>
+        <div class="dot-core"></div>
+      </div>
+      <div class="kicker reveal">A Membership for The Heartcollectors</div>
+      <h1 class="reveal">The<br><em>Inner</em> Sphere</h1>
+      <p class="lede reveal">Get closer to the songs, the road, and the moments before everyone else hears them.</p>
+      <div class="band reveal">Strategic Amplification · Tribal Mischief</div>
+    </section>
+
+    <!-- 1 · POSITIONING -->
+    <section class="slide" id="s1" data-chapter="The Concept">
+      <div class="eyebrow reveal">The Idea</div>
+      <h1 class="reveal" style="font-size:58px;max-width:880px;color:var(--ink)">Not a feed to scroll.<br>A circle to step inside.</h1>
+      <div class="vs reveal">
+        <div class="col a">
+          <div class="tag">A content subscription says</div>
+          <p>"Pay us, and we'll post more things at you."</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="col b">
+          <div class="tag">The Inner Sphere says</div>
+          <p>"Come inside the band's world while the songs are still forming."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · THE LADDER -->
+    <section class="slide" id="s2" data-chapter="The Ladder">
+      <div class="ladder-viz reveal">
+        <div class="ring" style="width:430px;height:430px"></div>
+        <div class="ring" style="width:320px;height:320px"></div>
+        <div class="ring" style="width:210px;height:210px"></div>
+        <div class="ring lit" style="width:110px;height:110px"></div>
+        <div class="lv-label" style="top:-9px">$5</div>
+        <div class="lv-label" style="top:48px">$20</div>
+        <div class="lv-label" style="top:103px">$50</div>
+        <div class="lv-core"><div class="pc">$200<br>core</div></div>
+      </div>
+      <div class="ladder-list">
+        <div class="eyebrow reveal" style="margin-bottom:10px">Four Rings of Access</div>
+        <h2 class="reveal" style="font-size:38px;margin-bottom:18px;color:var(--ink)">The closer you get,<br>the rarer the room.</h2>
+        <div class="reveal">
+          <div class="ladder-row"><div class="price">$5<span>/mo</span></div><div class="meta"><div class="name">Inner Sphere Pass</div><div class="pos">The weekly pulse of the band</div></div></div>
+          <div class="ladder-row"><div class="price">$20<span>/mo</span></div><div class="meta"><div class="name">The Listening Room</div><div class="pos">Hear new material first — and help shape it</div></div></div>
+          <div class="ladder-row"><div class="price">$50<span>/mo</span></div><div class="meta"><div class="name">The Song Circle</div><div class="pos">Personal, collectible, close</div></div></div>
+          <div class="ladder-row"><div class="price">$200<span>/mo</span></div><div class="meta"><div class="name">Patron Circle</div><div class="pos">Keeping the music on the road</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · TIER $5 -->
+    <section class="slide" id="s3" data-chapter="The Tiers">
+      <div class="tier">
+        <div class="figure reveal">
+          <div class="price"><span>$</span>5</div>
+          <div class="per">per month</div>
+        </div>
+        <div class="body reveal">
+          <div class="name">Inner Sphere Pass</div>
+          <div class="pos">Stay close to the journey.</div>
+          <ul class="feat">
+            <li>Each week, one member shares from their corner of the world — road notes, art, guitar ideas, the music they're living in</li>
+            <li>First access to tour dates, new music, and videos</li>
+            <li>Member polls and a standing merch discount</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · TIER $20 -->
+    <section class="slide" id="s4" data-chapter="The Tiers">
+      <div class="tier">
+        <div class="figure reveal">
+          <div class="price"><span>$</span>20</div>
+          <div class="per">per month</div>
+        </div>
+        <div class="body reveal">
+          <span class="pill">The conversion tier</span>
+          <div class="name">The Listening Room</div>
+          <div class="pos">Hear it first. React while it's still forming.</div>
+          <ul class="feat">
+            <li>Everything in the Inner Sphere Pass</li>
+            <li>A short monthly livestream where the band plays new songs, covers, and works in progress</li>
+            <li>Your reactions help decide what the band develops next</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · FOMO INTERSTITIAL -->
+    <section class="slide dark" id="s5" data-chapter="The Tiers">
+      <div class="markline reveal">The Listening Room</div>
+      <div class="quote reveal">Some of these songs may<br>never be played <b>this way</b> again.</div>
+      <div class="attrib reveal">— the hook that gets fans through the door</div>
+    </section>
+
+    <!-- 6 · TIER $50 -->
+    <section class="slide" id="s6" data-chapter="The Tiers">
+      <div class="tier">
+        <div class="figure reveal">
+          <div class="price"><span>$</span>50</div>
+          <div class="per">per month</div>
+        </div>
+        <div class="body reveal">
+          <div class="name">The Song Circle</div>
+          <div class="pos">For fans who want closeness, not just content.</div>
+          <ul class="feat">
+            <li>Monthly Q&amp;A with priority questions</li>
+            <li>An annual signed or numbered item — Kym's hand-made art postcard lives here</li>
+            <li>Early access to limited merch drops</li>
+            <li>Occasional rare demo and live-recording drops</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · TIER $200 -->
+    <section class="slide" id="s7" data-chapter="The Tiers">
+      <div class="tier">
+        <div class="figure reveal">
+          <div class="price"><span>$</span>200</div>
+          <div class="per">per month · capped from day one</div>
+        </div>
+        <div class="body reveal">
+          <span class="pill">Limited spots</span>
+          <div class="name">Patron Circle</div>
+          <div class="pos">For the fans helping keep the music on the road.</div>
+          <ul class="feat">
+            <li>2 tickets per eligible headline show — RSVP required, subject to venue capacity</li>
+            <li>Meet &amp; greet where possible</li>
+            <li>Your name in the next eligible physical release after 12 paid months</li>
+            <li>An annual private group listening session</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 · LAUNCH -->
+    <section class="slide" id="slaunch" data-chapter="The Launch">
+      <div class="eyebrow reveal">How We Open The Doors</div>
+      <h2 class="reveal" style="font-size:42px;color:var(--ink);max-width:760px">Launch with urgency, scarcity,<br>and a reason to join <em style="font-style:italic;color:var(--plum)">now</em>.</h2>
+      <div class="launch-grid reveal">
+        <div class="lcard"><div class="n">i</div><h3>Founding Member window</h3><p>A first wave that will never come around again — early supporters help shape year one.</p></div>
+        <div class="lcard"><div class="n">ii</div><h3>Limited Patron spots</h3><p>Capping the top tier protects the band and turns access into genuine scarcity.</p></div>
+        <div class="lcard"><div class="n">iii</div><h3>First Listening Room date</h3><p>Announced at launch, so there's something real to join for on day one.</p></div>
+        <div class="lcard"><div class="n">iv</div><h3>Founding Member wall</h3><p>A permanent archive that makes the earliest fans part of the story for good.</p></div>
+        <div class="lcard"><div class="n">v</div><h3>Quarterly Sphere Drop</h3><p>A recurring moment that holds retention strong between tours and releases.</p></div>
+        <div class="lcard"><div class="n">vi</div><h3>Public teaser clips</h3><p>After each session — showing outsiders exactly what they missed.</p></div>
+      </div>
+    </section>
+
+    <!-- 9 · CLOSE -->
+    <section class="slide dark" id="s8" data-chapter="The Invitation">
+      <div class="rings">
+        <div class="ring" style="width:680px;height:680px"></div>
+        <div class="ring" style="width:480px;height:480px"></div>
+        <div class="ring" style="width:300px;height:300px"></div>
+        <div class="ring" style="width:150px;height:150px;border-color:rgba(224,190,118,.55)"></div>
+        <div class="dot-core"></div>
+      </div>
+      <div class="eyebrow reveal">The Invitation</div>
+      <h1 class="reveal">Step inside<br>the <em>circle</em>.</h1>
+      <p class="lede reveal">The Inner Sphere is where we share the road notes, song ideas, and first listens we don't post anywhere else — with The Listening Room at the heart of it.</p>
+      <div class="founding reveal">Founding members will help shape the first year of The Inner Sphere from the inside.</div>
+      <div class="signoff reveal">Join The Inner Sphere · The Heartcollectors</div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const navEl = document.getElementById('nav');
+  let current = 0;
+
+  // Build chapter navigation from slides' data-chapter (ordered, de-duped)
+  const chapters = [];
+  slides.forEach((s,i)=>{
+    const c = s.dataset.chapter;
+    let entry = chapters.find(e=>e.name===c);
+    if(!entry){ entry = {name:c, first:i}; chapters.push(entry); }
+  });
+  chapters.forEach((ch,ci)=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="idx">${romize(ci+1)}</span><span>${ch.name}</span>`;
+    li.addEventListener('click',()=>go(ch.first));
+    ch.el = li;
+    navEl.appendChild(li);
+  });
+
+  function romize(n){return ['I','II','III','IV','V','VI','VII','VIII'][n-1]||n;}
+
+  function chapterOf(i){
+    let name = slides[i].dataset.chapter;
+    return chapters.findIndex(c=>c.name===name);
+  }
+
+  function render(){
+    slides.forEach((s,i)=>s.classList.toggle('active', i===current));
+    counter.innerHTML = `<b>${current+1}</b> / ${slides.length}`;
+    progress.style.width = ((current+1)/slides.length*100)+'%';
+    // dark/light counter handled by .slide.dark .counter — but counter is sibling, so set manually
+    const dark = slides[current].classList.contains('dark');
+    counter.style.color = dark ? 'var(--cream)' : 'var(--ink-soft)';
+    document.querySelector('.hint').style.color = dark ? 'rgba(236,226,208,.6)' : 'var(--ink-soft)';
+    const ci = chapterOf(current);
+    chapters.forEach((c,i)=>c.el.classList.toggle('active', i===ci));
+  }
+
+  function go(i){
+    current = Math.max(0, Math.min(slides.length-1, i));
+    render();
+  }
+  function next(){ if(current<slides.length-1) go(current+1); }
+  function prev(){ if(current>0) go(current-1); }
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){go(0);}
+    else if(e.key==='End'){go(slides.length-1);}
+    else if(e.key==='f'||e.key==='F'){toggleFs();}
+  });
+
+  // click stage right/left thirds to advance (handy for recording)
+  document.querySelector('.stage').addEventListener('click',e=>{
+    if(e.target.closest('.nav')) return;
+    const x = e.clientX, w = window.innerWidth;
+    if(x > w*0.55) next(); else if(x < w*0.30) prev();
+  });
+
+  // swipe support
+  let tx=0;
+  document.addEventListener('touchstart',e=>{tx=e.changedTouches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-tx;
+    if(dx<-50) next(); else if(dx>50) prev();
+  },{passive:true});
+
+  function toggleFs(){
+    if(!document.fullscreenElement){document.documentElement.requestFullscreen?.();}
+    else{document.exitFullscreen?.();}
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
